@@ -45,15 +45,15 @@ jobs:
           push: true # 推送镜像到 Docker Hub
           tags: bragelonne/234-deploylab-backend:latest # 替换为你的 Docker Hub 用户名，如 chartchai/234-deploylab-backend:latest
       -
-      name: copy file via ssh password # 通过 SSH 传输 docker-compose.yml 到服务器
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{secrets.HOST_SERVER}} # 服务器 IP（从 GitHub 机密获取）
-        username: ${{ secrets.HOST_USER_NAME }} # 服务器用户名（如 ubuntu）
-        key: ${{ secrets.HOST_SSH_PRIVATE_KEY }} # SSH 私钥（从 GitHub 机密获取）
-        port: 22 # SSH 端口（默认 22）
-        source: "docker-compose.yml" # 源文件：项目根目录下的 docker-compose.yml
-        target: "/home/ubuntu/backend" # 目标路径：服务器上的部署目录
+        name: copy file via ssh password # 通过 SSH 传输 docker-compose.yml 到服务器
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{secrets.HOST_SERVER}} # 服务器 IP（从 GitHub 机密获取）
+          username: ${{ secrets.HOST_USER_NAME }} # 服务器用户名（如 ubuntu）
+          key: ${{ secrets.HOST_SSH_PRIVATE_KEY }} # SSH 私钥（从 GitHub 机密获取）
+          port: 22 # SSH 端口（默认 22）
+          source: "docker-compose.yml" # 源文件：项目根目录下的 docker-compose.yml
+          target: "/home/ubuntu/backend" # 目标路径：服务器上的部署目录
       -
         name: docker compose # 在服务器上执行 Docker Compose 命令
         uses: appleboy/ssh-action@v1.2.1
