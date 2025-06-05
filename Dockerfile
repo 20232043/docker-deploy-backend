@@ -10,3 +10,5 @@ COPY ${DEPENDENCY}/BOOT-INF/classes /app
 
 ENTRYPOINT ["java" ,   "-Dspring.profiles.active=${JAVA_PROFILE}",\
           "-cp","app:app/lib/*","camt.se234.lab10.Lab10Application"]
+
+# add dockerfile tag: 1
