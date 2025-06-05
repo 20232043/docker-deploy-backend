@@ -1,0 +1,71 @@
+name: Deploy backend to host # 工作流名称
+on: # 触发条件：当 main 分支有代码推送时
+  push:
+    branches:
+      - main
+jobs:
+  docker:
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 运行环境
+    steps:
+      -
+        name: Checkout # 拉取代码到运行环境
+        uses: actions/checkout@v4
+      -
+        name: setup java # 配置 Java 环境（需与 Dockerfile 中的 JDK 版本一致）
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17' # 使用 Java 17
+          distribution: 'adopt'
+      -
+        name: run maven # 编译打包后端项目（跳过测试）
+        run: |
+          mvn  clean install  -DskipTests -B # 清理并安装，跳过测试
+          mkdir -p target/dependency && (cd target/dependency; unzip ../*.jar) # 解压 JAR 包到指定目录
+      -
+        name: Set up QEMU # 配置多架构支持（可选，根据需求保留）
+        uses: docker/setup-qemu-action@v3
+      -
+        name: Set up Docker Buildx # 配置 Docker Buildx（用于构建多平台镜像）
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Login to DockerHub # 登录 Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }} # 从 GitHub 机密中获取 Docker Hub 用户名
+          password: ${{ secrets.DOCKER_HUB_TOKEN }} # 从 GitHub 机密中获取访问令牌
+      -
+        name: prepare the docker-compose run # 查看文件列表（调试用，可选）
+        run: |
+          ls -l
+      -
+        name: Build and push # 构建并推送 Docker 镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: . # 构建上下文为项目根目录
+          push: true # 推送镜像到 Docker Hub
+          tags: bragelonne/234-deploylab-backend:latest # 替换为你的 Docker Hub 用户名，如 chartchai/234-deploylab-backend:latest
+      -
+      name: copy file via ssh password # 通过 SSH 传输 docker-compose.yml 到服务器
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{secrets.HOST_SERVER}} # 服务器 IP（从 GitHub 机密获取）
+        username: ${{ secrets.HOST_USER_NAME }} # 服务器用户名（如 ubuntu）
+        key: ${{ secrets.HOST_SSH_PRIVATE_KEY }} # SSH 私钥（从 GitHub 机密获取）
+        port: 22 # SSH 端口（默认 22）
+        source: "docker-compose.yml" # 源文件：项目根目录下的 docker-compose.yml
+        target: "/home/ubuntu/backend" # 目标路径：服务器上的部署目录
+      -
+        name: docker compose # 在服务器上执行 Docker Compose 命令
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{secrets.HOST_SERVER}} # 服务器 IP
+          username: ${{ secrets.HOST_USER_NAME }} # 服务器用户名
+          key: ${{ secrets.HOST_SSH_PRIVATE_KEY }} # SSH 私钥
+          port: 22 # SSH 端口
+          script: | # 执行的脚本命令
+            cd /home/ubuntu/backend # 进入部署目录
+            echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin # 使用令牌登录 Docker Hub
+            docker compose down # 停止并删除现有容器
+            docker compose pull # 拉取最新镜像
+            docker compose up -d # 启动容器（后台运行）
+            rm -rf /home/ubuntu/backend # 删除部署目录（可选，根据需求决定是否保留）
