@@ -36,7 +36,6 @@ public class CorsFilter implements Filter {
     public void destroy() {
         Filter.super.destroy();
     }
-    public void test_deepscource(){}
 }
 
 // add a tag: 2
