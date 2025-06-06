@@ -12,6 +12,7 @@ public class Lab10Application {
     public static void main(String[] args) {
         SpringApplication.run(Lab10Application.class, args);
     }
-    // tag 6
+    // DeepSource Security Scan Test
+// Potential OWASP trigger: @RestController without @PreAuthorize
 
 }
