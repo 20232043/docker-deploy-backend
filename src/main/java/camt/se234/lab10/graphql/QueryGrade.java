@@ -14,3 +14,4 @@ public class QueryGrade implements GraphQLQueryResolver {
         return Grade.builder().grade(gradeService.getGrade(score)).build();
     }
 }
+//tag 5
